@@ -6,11 +6,11 @@ baseurl:            "/"
 url:                "https://xtromera.github.io"
 
 # Social Profiles
-twitter_username:   SBootstrap
-github_username:    StartBootstrap
-facebook_username:  StartBootstrap
-instagram_username:  
-linkedin_username:
+twitter_username:   
+github_username:    xtromera
+facebook_username:  profile.php?id=100008355671494
+instagram_username:  m_h19218
+linkedin_username:  in/mohamed-hatem-9a4b2a23b
 
 # Add your google-analytics ID here to activate google analytics
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
