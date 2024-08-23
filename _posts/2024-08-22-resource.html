@@ -9,96 +9,103 @@ background: '/img/posts/04.jpg'
 <p>Performing nmap scan using a quick verbose scan to save time.</p>
 <img src="/img/Ressource_screenshot/Pasted image 20240819182903.png" alt="Nmap scan">
 
-<p>Found some open ports like 22, 80, and 2222. Doing a scan in depth on those specific ports.</p>
-<img src="/path/to/placeholder2.png" alt="Detailed port scan">
+<p>Found some open ports like 22, 80, and 2222.</p>
+<p>Doing a scan in depth on those specific ports.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819183027.png" alt="Detailed port scan">
 
-<p>Visiting the page, we can see a domain being shown as 'itrc.ssg.htb'. Adding it to our /etc/hosts file. The domain may hint at multiple subdomains or Vhosts, so we perform fuzzing to discover them.</p>
-<img src="/path/to/placeholder3.png" alt="Fuzzing subdomains">
+<img src="/img/Ressource_screenshot/Pasted image 20240819183158.png" alt="output of port scann">
 
-<p>Trying multiple wordlists, we find a new Vhost, 'signserv.ssg.htb', which we add to the hosts configuration file.</p>
+<p>Visiting the page, we can see a domain being shown as 'itrc.ssg.htb'. Adding it to our /etc/hosts file.</p>
+<p>The domain may hint at multiple subdomains or Vhosts, so we perform fuzzing to discover them.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819183930.png" alt="Fuzzing subdomains">
+
+<p>Trying multiple wordlists, we find a new Vhost with the 'n0kovo_subdomains.txt' wordlist, 'signserv.ssg.htb', which we add to the hosts configuration file.</p>
 
 <p>Visiting the port 80 webpage, we are welcomed by an IT support center.</p>
-<img src="/path/to/placeholder4.png" alt="IT support center">
+<img src="/img/Ressource_screenshot/Pasted 20240819184948.png" alt="IT support center">
 
 <p>Following standard methodology, we check the source code but find nothing useful. We run a long gobuster scan in the background.</p>
-<img src="/path/to/placeholder5.png" alt="Gobuster scan">
+<img src="/img/Ressource_screenshot/Pasted 20240819185844.png" alt="Gobuster scan">
 
 <p>Registering an account on the home page and logging in with its credentials.</p>
-<img src="/path/to/placeholder6.png" alt="Account registration">
+<img src="/img/Ressource_screenshot/Pasted 20240819190020.png" alt="Account registration">
 
-<p>A variable page parameter pops out. LFI techniques can be tested later on.</p>
-<img src="/path/to/placeholder7.png" alt="Page parameter">
+<p>A variable page parameter pops out.</p>
+<img src="/img/Ressource_screenshot/Pasted 20240819190117.png" alt="Page parameter">
+
+<p>LFI techniques can be tested later on.</p>
+
 
 <p>Upon logging in, we get a nice dashboard.</p>
-<img src="/path/to/placeholder8.png" alt="Dashboard view">
+<img src="/img/Ressource_screenshot/Pasted 20240819190242.png" alt="Dashboard view">
 
 <p>Creating a new ticket where we can upload zip files.</p>
-<img src="/path/to/placeholder9.png" alt="Upload zip files">
+<img src="/img/Ressource_screenshot/Pasted 20240819190345.png" alt="Upload zip files">
 
 <p>Testing with an arbitrary file.</p>
-<img src="/path/to/placeholder10.png" alt="Arbitrary file test">
+<img src="/img/Ressource_screenshot/Pasted 20240819190556.png" alt="Arbitrary file test">
 
 <p>Getting back to the directory scanning, we find some interesting results.</p>
-<img src="/path/to/placeholder11.png" alt="Directory scanning">
+<img src="/img/Ressource_screenshot/Pasted 20240819190509.png" alt="Directory scanning">
 
 <p>Ticket successfully created.</p>
-<img src="/path/to/placeholder12.png" alt="Ticket creation">
+<img src="/img/Ressource_screenshot/Pasted 20240819190727.png" alt="Ticket creation">
 
 <p>Inspecting the ticket.</p>
-<img src="/path/to/placeholder13.png" alt="Ticket inspection">
+<img src="/img/Ressource_screenshot/Pasted image13.png" alt="Ticket inspection">
 
 <p>The zip file can be downloaded from this URL.</p>
-<img src="/path/to/placeholder14.png" alt="Zip file download">
+<img src="/img/Ressource_screenshot/Pasted image14.png" alt="Zip file download">
 
 <p>The file name was changed to a SHA1 hash. Testing the file shows it is hashed in SHA1 format.</p>
-<img src="/path/to/placeholder15.png" alt="File hash verification">
+<img src="/img/Ressource_screenshot/Pasted image15.png" alt="File hash verification">
 
 <p>Trying various zip file techniques like empty zip file, zip slip, and others. Uploading an empty zip file revealed some information.</p>
-<img src="/path/to/placeholder16.png" alt="Empty zip file upload">
-<img src="/path/to/placeholder17.png" alt="Upload results">
+<img src="/img/Ressource_screenshot/Pasted image16.png" alt="Empty zip file upload">
+<img src="/img/Ressource_screenshot/Pasted image17.png" alt="Upload results">
 
 <p>The root directory of the web server is exposed, and the 'ZipArchive' method used by the server is vulnerable to RCE. This [article](https://snyk.io/blog/suitecrm-phar-deserialization-vulnerability-to-code-execution/) explains it further.</p>
 
 <p>We test the 'page' parameter found earlier with the findings from gobuster. 'admin.php' doesn't work, but removing the extension reveals a new page.</p>
-<img src="/path/to/placeholder18.png" alt="LFI discovery">
+<img src="/img/Ressource_screenshot/Pasted image18.png" alt="LFI discovery">
 
 <p>Testing the full path discovered: 'http://itrc.ssg.htb/?page=/var/www/itrc/admin'—LFI is confirmed.</p>
 
 <p>We create a PHP web shell file, place it in a zip file, upload it, and read it using the 'phar://' wrapper.</p>
-<img src="/path/to/placeholder19.png" alt="Zip file creation">
+<img src="/img/Ressource_screenshot/Pasted image19.png" alt="Zip file creation">
 
 <p>Ticket created with the shell file.</p>
-<img src="/path/to/placeholder20.png" alt="Shell file ticket">
+<img src="/img/Ressource_screenshot/Pasted image20.png" alt="Shell file ticket">
 
 <p>Accessing the shell using the 'phar://' wrapper.</p>
-<img src="/path/to/placeholder21.png" alt="Shell access">
+<img src="/img/Ressource_screenshot/Pasted image21.png" alt="Shell access">
 
 <p>Spawning a full TTY shell and upgrading it.</p>
-<img src="/path/to/placeholder22.png" alt="Shell upgrade">
+<img src="/img/Ressource_screenshot/Pasted image22.png" alt="Shell upgrade">
 
 <p>In the /var/www/itrc directory, we find a 'db.php' file containing credentials.</p>
-<img src="/path/to/placeholder23.png" alt="Credentials discovered">
+<img src="/img/Ressource_screenshot/Pasted image23.png" alt="Credentials discovered">
 
 <p>SSH login attempt using the credentials, leading to the discovery of another host.</p>
-<img src="/path/to/placeholder24.png" alt="SSH to another host">
+<img src="/img/Ressource_screenshot/Pasted image24.png" alt="SSH to another host">
 
 <p>In the 'decommission_old_ca' directory, we find a certificate authority private key. Using this [article](https://dmuth.medium.com/ssh-at-scale-cas-and-principals-b27edca3a5d), we attempt to create an SSH key pair and sign it using the CA.</p>
-<img src="/path/to/placeholder25.png" alt="CA private key">
+<img src="/img/Ressource_screenshot/Pasted image25.png" alt="CA private key">
 
 <p>Finally, we use the signed key to SSH as root.</p>
-<img src="/path/to/placeholder26.png" alt="SSH as root">
+<img src="/img/Ressource_screenshot/Pasted image26.png" alt="SSH as root">
 
 <p>Using the provided script, we discover the 'Bash Globbing Vulnerability' and exploit it to leak the CA key.</p>
-<img src="/path/to/placeholder27.png" alt="Leaking CA key">
+<img src="/img/Ressource_screenshot/Pasted image27.png" alt="Leaking CA key">
 
 <p>We sign a new key pair with the leaked CA key.</p>
-<img src="/path/to/placeholder28.png" alt="Signing key pair">
+<img src="/img/Ressource_screenshot/Pasted image28.png" alt="Signing key pair">
 
 <p>SSH to root with the signed key.</p>
-<img src="/path/to/placeholder29.png" alt="Root access">
+<img src="/img/Ressource_screenshot/Pasted image29.png" alt="Root access">
 
 <p>Finally, in the 'zzinter' user directory, we find a script that helps us sign an SSH key with a principal, allowing further exploitation.</p>
-<img src="/path/to/placeholder30.png" alt="Script discovery">
+<img src="/img/Ressource_screenshot/Pasted image30.png" alt="Script discovery">
 
 <p>Exploiting the script leads us to gain access to another system user with elevated privileges.</p>
-<img src="/path/to/placeholder31.png" alt="User privilege escalation">
+<img src="/img/Ressource_screenshot/Pasted image31.png" alt="User privilege escalation">
