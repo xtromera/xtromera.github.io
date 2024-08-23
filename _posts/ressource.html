@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breaking Into the Network: A Pentester's Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #007ACC;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+        }
+        blockquote {
+            background: #f9f9f9;
+            border-left: 10px solid #ccc;
+            margin: 1.5em 10px;
+            padding: 0.5em 10px;
+            quotes: "“" "”" "‘" "’";
+        }
+        blockquote:before {
+            color: #ccc;
+            content: open-quote;
+            font-size: 4em;
+            line-height: 0.1em;
+            margin-right: 0.25em;
+            vertical-align: -0.4em;
+        }
+        blockquote p {
+            display: inline;
+        }
+        pre, code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Breaking Into the Network: A Pentester's Guide</h1>
+    <h2>Step-by-step walkthrough of a recent CTF challenge</h2>
+    <p><strong>Date:</strong> August 23, 2024</p>
+
+    <h3>Initial Reconnaissance</h3>
+    <p>Starting with an <code>nmap</code> scan using a quick verbose scan to save time.</p>
+    <img src="path/to/screenshot1.png" alt="Nmap Scan Placeholder">
+
+    <p>The scan reveals some open ports, including 22, 80, and 2222. Let's dive deeper into these ports with a more focused scan.</p>
+    <img src="path/to/screenshot2.png" alt="Port Scan Placeholder">
+    <img src="path/to/screenshot3.png" alt="Port Scan Results Placeholder">
+
+    <h3>Discovering the Domain</h3>
+    <p>Visiting the page, we find a domain: <code>itrc.ssg.htb</code>. We add it to our <code>/etc/hosts</code> file. This discovery suggests the potential for multiple subdomains or Vhosts, so let’s start fuzzing to uncover them.</p>
+    <img src="path/to/screenshot4.png" alt="Fuzzing Subdomains Placeholder">
+
+    <p>Using the <code>n0kovo_subdomains.txt</code> wordlist, we identify a new Vhost: <code>signserv.ssg.htb</code>, which is added to our hosts file.</p>
+
+    <h3>Analyzing the Webpage</h3>
+    <p>Accessing port 80, we are greeted by an IT support center page.</p>
+    <img src="path/to/screenshot5.png" alt="IT Support Center Placeholder">
+
+    <p>Following our standard methodology, we check the source code but find nothing useful. While running a <code>gobuster</code> scan in the background, we register an account on the homepage and log in.</p>
+    <img src="path/to/screenshot6.png" alt="Gobuster Scan Placeholder">
+    <img src="path/to/screenshot7.png" alt="Login Placeholder">
+
+    <h3>Identifying Potential Vulnerabilities</h3>
+    <p>Upon logging in, we notice a <code>page</code> parameter that could be vulnerable to LFI attacks. For now, we’ll note it down for later testing. We are also presented with a dashboard.</p>
+    <img src="path/to/screenshot8.png" alt="Dashboard Placeholder">
+
+    <p>Next, we explore the file upload feature by creating a new ticket where we can upload ZIP files.</p>
+    <img src="path/to/screenshot9.png" alt="File Upload Placeholder">
+
+    <p>Testing the upload with an arbitrary file, we receive some interesting findings from our directory scan.</p>
+    <img src="path/to/screenshot10.png" alt="Directory Scan Placeholder">
+
+    <h3>Exploiting the LFI Vulnerability</h3>
+    <p>Returning to our earlier observation, we test the <code>page</code> parameter with the findings from <code>gobuster</code>. Although <code>admin.php</code> didn't work initially, removing the extension brings us to a new page.</p>
+    <img src="path/to/screenshot11.png" alt="LFI Parameter Placeholder">
+
+    <p>Testing with the full path discovered, we confirm the LFI vulnerability. Now, we prepare a PHP web shell file, compress it into a ZIP file, and upload it.</p>
+    <img src="path/to/screenshot12.png" alt="PHP Web Shell Placeholder">
+
+    <h3>Achieving Remote Code Execution</h3>
+    <p>Once the ZIP file is uploaded, we use the <code>phar://</code> wrapper to access the shell.</p>
+    <img src="path/to/screenshot13.png" alt="Accessing Shell Placeholder">
+
+    <p>The payload works as expected, and now it’s time to catch a reverse shell by starting a listener and using a URL-encoded payload.</p>
+    <img src="path/to/screenshot14.png" alt="Reverse Shell Placeholder">
+
+    <h3>Escalating Privileges</h3>
+    <p>Exploring <code>/var/www/itrc</code>, we discover a <code>db.php</code> file with credentials. Unfortunately, a password spray attempt fails. However, in the <code>/uploads</code> directory, we find multiple ZIP files.</p>
+    <img src="path/to/screenshot15.png" alt="ZIP Files Placeholder">
+
+    <p>Extracting and analyzing the uncommon files leads us to the next stage of our attack.</p>
+    <img src="path/to/screenshot16.png" alt="File Extraction Placeholder">
+
+    <h3>Compromising the SSH Service</h3>
+    <p>After obtaining a certificate authority private key, we generate an SSH key pair and sign it with the CA. This allows us to SSH into the server as the root user.</p>
+    <img src="path/to/screenshot17.png" alt="SSH Key Pair Placeholder">
+    <img src="path/to/screenshot18.png" alt="SSH Login Placeholder">
+
+    <h3>Exploiting Script Vulnerabilities</h3>
+    <p>On further inspection, we find a Bash script vulnerable to command injection. Using this vulnerability, we leak the CA key and sign a new SSH key pair to gain access to the system as the <code>root</code> user.</p>
+    <img src="path/to/screenshot19.png" alt="Script Exploit Placeholder">
+
+    <p>Finally, we SSH into the system with our newly signed key, gaining full access to the target.</p>
+    <img src="path/to/screenshot20.png" alt="Root Access Placeholder">
+
+    <p>This post highlights the importance of thorough reconnaissance, testing for common vulnerabilities, and leveraging discovered information to escalate privileges and gain full access to a target system. Stay tuned for more writeups and insights into the world of pentesting.</p>
+
+</body>
+</html>
