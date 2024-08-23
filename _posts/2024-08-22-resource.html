@@ -11,21 +11,21 @@ background: '/img/posts/04.jpg'
 
 <p>Found some open ports like 22, 80, and 2222.</p>
 <p>Doing a scan in depth on those specific ports.</p>
-<img src="/img/Ressource_screenshot/Pasted image 20240819183027.png" alt="Detailed port scan">
+<img src="/img/Ressource_screenshot/Pasted image 20240819183027.png" alt="Detailed port scan" style="width: 600 px; height: auto;">
 
-<img src="/img/Ressource_screenshot/Pasted image 20240819183158.png" alt="output of port scann">
+<img src="/img/Ressource_screenshot/Pasted image 20240819183158.png" alt="output of port scann" style="width: 600 px; height: auto;">
 
 <p>Visiting the page, we can see a domain being shown as 'itrc.ssg.htb'. Adding it to our /etc/hosts file.</p>
 <p>The domain may hint at multiple subdomains or Vhosts, so we perform fuzzing to discover them.</p>
-<img src="/img/Ressource_screenshot/Pasted image 20240819183930.png" alt="Fuzzing subdomains">
+<img src="/img/Ressource_screenshot/Pasted image 20240819183930.png" alt="Fuzzing subdomains" style="width: 600 px; height: auto;">
 
 <p>Trying multiple wordlists, we find a new Vhost with the 'n0kovo_subdomains.txt' wordlist, 'signserv.ssg.htb', which we add to the hosts configuration file.</p>
 
 <p>Visiting the port 80 webpage, we are welcomed by an IT support center.</p>
-<img src="/img/Ressource_screenshot/Pasted image 20240819184948.png" alt="IT support center">
+<img src="/img/Ressource_screenshot/Pasted image 20240819184948.png" alt="IT support center" style="width: 600 px; height: auto;">
 
 <p>Following standard methodology, we check the source code but find nothing useful. We run a long gobuster scan in the background.</p>
-<img src="/img/Ressource_screenshot/Pasted image 20240819185844.png" alt="Gobuster scan">
+<img src="/img/Ressource_screenshot/Pasted image 20240819185844.png" alt="Gobuster scan" style="width: 600 px; height: auto;">
 
 <p>Registering an account on the home page and logging in with its credentials.</p>
 <img src="/img/Ressource_screenshot/Pasted image 20240819190020.png" alt="Account registration">
