@@ -1,98 +1,40 @@
 ---
 layout: post
-title: "Breaking Into the Network: A Pentester's Guide"
-subtitle: "Step-by-step walkthrough of a recent CTF challenge"
-date: 2024-08-23 15:00:00 -0400
-background: '/img/posts/pen_test_background.jpg'
+title: "Science has not yet mastered prophecy"
+subtitle: "We predict too much for the next year and yet far too little for the next ten."
+date: 2020-01-29 23:45:13 -0400
+background: '/img/posts/04.jpg'
 ---
 
-<p>Starting with an <code>nmap</code> scan using a quick verbose scan to save time.</p>
+<p>Never in all their history have men been able truly to conceive of the world as one: a single sphere, a globe, having the qualities of a globe, a round earth in which all the directions eventually meet, in which there is no center because every point, or none, is center — an equal earth which all men occupy as equals. The airman's earth, if free men make it, will be truly round: a globe in practice, not in theory.</p>
 
-![Nmap Scan Placeholder](path/to/screenshot1.png)
+<p>Science cuts two ways, of course; its products can be used for both good and evil. But there's no turning back from science. The early warnings about technological dangers also come from science.</p>
 
-<p>The scan reveals some open ports, including 22, 80, and 2222. Let's dive deeper into these ports with a more focused scan.</p>
+<p>What was most significant about the lunar voyage was not that man set foot on the Moon but that they set eye on the earth.</p>
 
-![Port Scan Placeholder](path/to/screenshot2.png)
-![Port Scan Results Placeholder](path/to/screenshot3.png)
+<p>A Chinese tale tells of some men sent to harm a young girl who, upon seeing her beauty, become her protectors rather than her violators. That's how I felt seeing the Earth for the first time. I could not help but love and cherish her.</p>
 
-<p>Visiting the page, we find a domain: <code>itrc.ssg.htb</code>. We add it to our <code>/etc/hosts</code> file. This discovery suggests the potential for multiple subdomains or Vhosts, so let’s start fuzzing to uncover them.</p>
+<p>For those who have seen the Earth from space, and for the hundreds and perhaps thousands more who will, the experience most certainly changes your perspective. The things that we share in our world are far more valuable than those which divide us.</p>
 
-![Fuzzing Subdomains Placeholder](path/to/screenshot4.png)
+<h2 class="section-heading">The Final Frontier</h2>
 
-<p>Using the <code>n0kovo_subdomains.txt</code> wordlist, we identify a new Vhost: <code>signserv.ssg.htb</code>, which is added to our hosts file.</p>
+<p>There can be no thought of finishing for ‘aiming for the stars.’ Both figuratively and literally, it is a task to occupy the generations. And no matter how much progress one makes, there is always the thrill of just beginning.</p>
 
-<h2 class="section-heading">Analyzing the Webpage</h2>
+<p>There can be no thought of finishing for ‘aiming for the stars.’ Both figuratively and literally, it is a task to occupy the generations. And no matter how much progress one makes, there is always the thrill of just beginning.</p>
 
-<p>Accessing port 80, we are greeted by an IT support center page.</p>
+<blockquote class="blockquote">The dreams of yesterday are the hopes of today and the reality of tomorrow. Science has not yet mastered prophecy. We predict too much for the next year and yet far too little for the next ten.</blockquote>
 
-![IT Support Center Placeholder](path/to/screenshot5.png)
+<p>Spaceflights cannot be stopped. This is not the work of any one man or even a group of men. It is a historical process which mankind is carrying out in accordance with the natural laws of human development.</p>
 
-<p>Following our standard methodology, we check the source code but find nothing useful. While running a <code>gobuster</code> scan in the background, we register an account on the homepage and log in.</p>
+<h2 class="section-heading">Reaching for the Stars</h2>
 
-![Gobuster Scan Placeholder](path/to/screenshot6.png)
-![Login Placeholder](path/to/screenshot7.png)
+<p>As we got further and further away, it [the Earth] diminished in size. Finally it shrank to the size of a marble, the most beautiful you can imagine. That beautiful, warm, living object looked so fragile, so delicate, that if you touched it with a finger it would crumble and fall apart. Seeing this has to change a man.</p>
 
-<h2 class="section-heading">Identifying Potential Vulnerabilities</h2>
+<img class="img-fluid" src="https://source.unsplash.com/Mn9Fa_wQH-M/800x450" alt="Demo Image">
+<span class="caption text-muted">To go places and do things that have never been done before – that’s what living is all about.</span>
 
-<p>Upon logging in, we notice a <code>page</code> parameter that could be vulnerable to LFI attacks. For now, we’ll note it down for later testing. We are also presented with a dashboard.</p>
+<p>Space, the final frontier. These are the voyages of the Starship Enterprise. Its five-year mission: to explore strange new worlds, to seek out new life and new civilizations, to boldly go where no man has gone before.</p>
 
-![Dashboard Placeholder](path/to/screenshot8.png)
+<p>As I stand out here in the wonders of the unknown at Hadley, I sort of realize there’s a fundamental truth to our nature, Man must explore, and this is exploration at its greatest.</p>
 
-<p>Next, we explore the file upload feature by creating a new ticket where we can upload ZIP files.</p>
-
-![File Upload Placeholder](path/to/screenshot9.png)
-
-<p>Testing the upload with an arbitrary file, we receive some interesting findings from our directory scan.</p>
-
-![Directory Scan Placeholder](path/to/screenshot10.png)
-
-<h2 class="section-heading">Exploiting the LFI Vulnerability</h2>
-
-<p>Returning to our earlier observation, we test the <code>page</code> parameter with the findings from <code>gobuster</code>. Although <code>admin.php</code> didn't work initially, removing the extension brings us to a new page.</p>
-
-![LFI Parameter Placeholder](path/to/screenshot11.png)
-
-<p>Testing with the full path discovered, we confirm the LFI vulnerability. Now, we prepare a PHP web shell file, compress it into a ZIP file, and upload it.</p>
-
-![PHP Web Shell Placeholder](path/to/screenshot12.png)
-
-<h2 class="section-heading">Achieving Remote Code Execution</h2>
-
-<p>Once the ZIP file is uploaded, we use the <code>phar://</code> wrapper to access the shell.</p>
-
-![Accessing Shell Placeholder](path/to/screenshot13.png)
-
-<p>The payload works as expected, and now it’s time to catch a reverse shell by starting a listener and using a URL-encoded payload.</p>
-
-![Reverse Shell Placeholder](path/to/screenshot14.png)
-
-<h2 class="section-heading">Escalating Privileges</h2>
-
-<p>Exploring <code>/var/www/itrc</code>, we discover a <code>db.php</code> file with credentials. Unfortunately, a password spray attempt fails. However, in the <code>/uploads</code> directory, we find multiple ZIP files.</p>
-
-![ZIP Files Placeholder](path/to/screenshot15.png)
-
-<p>Extracting and analyzing the uncommon files leads us to the next stage of our attack.</p>
-
-![File Extraction Placeholder](path/to/screenshot16.png)
-
-<h2 class="section-heading">Compromising the SSH Service</h2>
-
-<p>After obtaining a certificate authority private key, we generate an SSH key pair and sign it with the CA. This allows us to SSH into the server as the root user.</p>
-
-![SSH Key Pair Placeholder](path/to/screenshot17.png)
-![SSH Login Placeholder](path/to/screenshot18.png)
-
-<h2 class="section-heading">Exploiting Script Vulnerabilities</h2>
-
-<p>On further inspection, we find a Bash script vulnerable to command injection. Using this vulnerability, we leak the CA key and sign a new SSH key pair to gain access to the system as the <code>root</code> user.</p>
-
-![Script Exploit Placeholder](path/to/screenshot19.png)
-
-<p>Finally, we SSH into the system with our newly signed key, gaining full access to the target.</p>
-
-![Root Access Placeholder](path/to/screenshot20.png)
-
-<p>This post highlights the importance of thorough reconnaissance, testing for common vulnerabilities, and leveraging discovered information to escalate privileges and gain full access to a target system. Stay tuned for more writeups and insights into the world of pentesting.</p>
-
-<p>Placeholder text by <a href="https://github.com/">GitHub Pages</a>. Photographs by <a href="https://unsplash.com/">Unsplash</a>.</p>
+<p>Placeholder text by <a href="http://spaceipsum.com/">Space Ipsum</a>. Photographs by <a href="https://unsplash.com/">Unsplash</a>.</p>
