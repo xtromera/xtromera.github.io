@@ -114,8 +114,7 @@ background: '/img/posts/04.jpg'
 <img src="/img/Ressource_screenshot/Pasted image 20240819220704.png" alt="SSH as root">
 
 <p> Going through the files inside the 'zzinter' user,  a script can be found </p>
-```markdown
-```bash
+<pre><code>
 #!/bin/bash
 
 usage () {
@@ -154,7 +153,7 @@ fi
 public_key=$(cat $public_key_file)
 
 curl -s signserv.ssg.htb/v1/sign -d '{"pubkey": "'"$public_key"'", "username": "'"$username"'", "principals": "'"$principal"'"}' -H "Content-Type: application/json" -H "Authorization:Bearer 7Tqx6owMLtnt6oeR2ORbWmOPk30z4ZH901kH6UUT6vNziNqGrYgmSve5jCmnPJDE"
-
+</pre></code>
 
 <p>Using the provided script, we discover the 'Bash Globbing Vulnerability' and exploit it to leak the CA key.</p>
 <img src="/img/Ressource_screenshot/Pasted image27.png" alt="Leaking CA key">
