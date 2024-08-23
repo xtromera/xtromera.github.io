@@ -25,57 +25,60 @@ background: '/img/posts/04.jpg'
 <img src="/img/Ressource_screenshot/Pasted image 20240819184948.png" alt="IT support center">
 
 <p>Following standard methodology, we check the source code but find nothing useful. We run a long gobuster scan in the background.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819185844.png" alt="Gobuster scan">
+<img src="/img/Ressource_screenshot/Pasted image 20240819185844.png" alt="Gobuster scan">
 
 <p>Registering an account on the home page and logging in with its credentials.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190020.png" alt="Account registration">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190020.png" alt="Account registration">
 
 <p>A variable page parameter pops out.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190117.png" alt="Page parameter">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190117.png" alt="Page parameter">
 
 <p>LFI techniques can be tested later on.</p>
 
 
 <p>Upon logging in, we get a nice dashboard.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190242.png" alt="Dashboard view">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190242.png" alt="Dashboard view">
 
 <p>Creating a new ticket where we can upload zip files.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190345.png" alt="Upload zip files">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190345.png" alt="Upload zip files">
 
 <p>Testing with an arbitrary file.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190556.png" alt="Arbitrary file test">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190556.png" alt="Arbitrary file test">
 
 <p>Getting back to the directory scanning, we find some interesting results.</p>
-<img src="/img/Ressource_screenshot/Pasted 20240819190509.png" alt="Directory scanning">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190509.png" alt="Directory scanning">
 
 <p>Ticket successfully created.</p>
 <img src="/img/Ressource_screenshot/Pasted 20240819190727.png" alt="Ticket creation">
 
 <p>Inspecting the ticket.</p>
-<img src="/img/Ressource_screenshot/Pasted image13.png" alt="Ticket inspection">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190805.png" alt="Ticket inspection">
 
 <p>The zip file can be downloaded from this URL.</p>
-<img src="/img/Ressource_screenshot/Pasted image14.png" alt="Zip file download">
+<img src="/img/Ressource_screenshot/Pasted image 20240819190851.png" alt="Zip file download">
 
-<p>The file name was changed to a SHA1 hash. Testing the file shows it is hashed in SHA1 format.</p>
-<img src="/img/Ressource_screenshot/Pasted image15.png" alt="File hash verification">
+<p> The file name was changed to '7897482fb56032dbe80010ff567893e372e751d9.zip' which seems to be a hash. After analysis and using hash identification tools, sha1 was identified.</p>
+<p> Seems that the application hash the file in sha1 format and upload it with this name.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819191210.png" alt="File hash verification">
 
-<p>Trying various zip file techniques like empty zip file, zip slip, and others. Uploading an empty zip file revealed some information.</p>
-<img src="/img/Ressource_screenshot/Pasted image16.png" alt="Empty zip file upload">
-<img src="/img/Ressource_screenshot/Pasted image17.png" alt="Upload results">
+<p>Zip files techniques like empty zip file, zip slip, malicious code injection in the zip files, simlink and others can be tried.</p>
+<p>Uploading an empty zip files did reveal some information.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819191616.png" alt="Empty zip file upload">
+<img src="/img/Ressource_screenshot/Pasted image 20240819191632.png" alt="Upload results">
 
-<p>The root directory of the web server is exposed, and the 'ZipArchive' method used by the server is vulnerable to RCE. This [article](https://snyk.io/blog/suitecrm-phar-deserialization-vulnerability-to-code-execution/) explains it further.</p>
-
+<p>First, the root directory of the webserver was exposed 'var/www/itrc/'</p>
+<p>second, we get the method ' ZipArchive' that the server use. This method has a vulnerability where it can lead to RCE , this <a href="https://snyk.io/blog/suitecrm-phar-deserialization-vulnerability-to-code-execution/" target="_blank">article</a> explains it.</p>
+<p>Rebuilding what we discovered, found the root path of the web application found a potential attack vector through a PHAR attack. What is needed for the complete attack vector to work is a vulnerable LFI parameter.</p>
 <p>We test the 'page' parameter found earlier with the findings from gobuster. 'admin.php' doesn't work, but removing the extension reveals a new page.</p>
-<img src="/img/Ressource_screenshot/Pasted image18.png" alt="LFI discovery">
+<img src="/img/Ressource_screenshot/Pasted image 20240819192857.png" alt="LFI discovery">
 
-<p>Testing the full path discovered: 'http://itrc.ssg.htb/?page=/var/www/itrc/admin'—LFI is confirmed.</p>
+<p>Testing the full path discovered: 'http://itrc.ssg.htb/?page=/var/www/itrc/admin' LFI is confirmed.</p>
 
-<p>We create a PHP web shell file, place it in a zip file, upload it, and read it using the 'phar://' wrapper.</p>
-<img src="/img/Ressource_screenshot/Pasted image19.png" alt="Zip file creation">
-
+<p>What is needed now is to make a php web shell file, put it in a zip file, upload it and read it using the 'phar://' wrapper.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819194232.png" alt="Zip file creation">
+<p>Last step was not necessary but it was done to get the specific name of the zip file that we will be accessing (although it could be done from the browser directly)</p>
 <p>Ticket created with the shell file.</p>
-<img src="/img/Ressource_screenshot/Pasted image20.png" alt="Shell file ticket">
+<img src="/img/Ressource_screenshot/Pasted image 20240819193850.png" alt="Shell file ticket">
 
 <p>Accessing the shell using the 'phar://' wrapper.</p>
 <img src="/img/Ressource_screenshot/Pasted image21.png" alt="Shell access">
