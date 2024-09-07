@@ -93,7 +93,7 @@ hashcat -m 18200 l_clark_hash /usr/share/wordlists/rockyou.txt
 We get the valid credentials `l.clark:WAT?watismypass!`.
 
 <br/> 
-<img src="/img/infiltrator_screenshots/Pasted image 20240907221406.png" alt="1" style="width:700px; height:auto;">
+<img src="/img/infiltrator_screenshots/Pasted image 20240906175209.png" alt="1" style="width:700px; height:auto;">
 <br/>
 
 Now checking for potential password reuse  
