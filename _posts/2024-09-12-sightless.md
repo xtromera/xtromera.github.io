@@ -77,9 +77,7 @@ Following the steps:
 
 * Add the command to be executed in the `Database` Textbox with this format.
 
-```bash
-	test
-```
+```bash {{ process.mainModule.require('child_process').exec('Command') }} ```
 
 <br/> 
 <img src="/img/sightless_screenshots/Pasted image 20240911091638.png" alt="1" style="width:700px; height:auto;">
