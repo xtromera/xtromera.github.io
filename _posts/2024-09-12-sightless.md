@@ -2,7 +2,7 @@
 layout: post
 title: "Sightless HTB writeup"
 subtitle: "Walkethrough for the Sightless HTB machine."
-date: 2024-09-13 23:45:13
+date: 2024-09-12 23:45:13
 background: '/img/posts/04.jpg'
 
 ---
