@@ -50,8 +50,8 @@ Looking at the `index` page, we get an interesting button referencing to `sqlpad
 <img src="/img/sightless_screenshots/Pasted image 20240908162741.png" alt="1" style="width:700px; height:auto;">
 <br/>
 
-> [!NOTE] SQLPad docs
-> SQLPad is **a web app which enables end users to connect via browser to various SQL servers, explore data by writing and running complex SQL queries, and eventually visualize the results** 
+> **Note:** SQLPad is **a web app which enables end users to connect via browser to various SQL servers, explore data by writing and running complex SQL queries, and eventually visualize the results.**
+ 
 
 When clicking on the Start now button, we are redirected to this subdomain `http://sqlpad.sightless.htb/`  
 We get this page when we add it to the `/etc/hosts` file.
