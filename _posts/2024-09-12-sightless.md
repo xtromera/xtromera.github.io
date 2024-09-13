@@ -79,7 +79,7 @@ Following the steps:
 
 
 ```bash
-\{\{ process.mainModule.require('child_process').exec('Command') \}\}
+\{\{ process.mainModule.require('child_process').exec('Command') \}\} 
 ```
 
 
