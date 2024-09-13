@@ -78,7 +78,9 @@ Following the steps:
 * Add the command to be executed in the `Database` Textbox with this format.
 
 
-` {{ process.mainModule.require('child_process').exec('Command') }} `
+```plaintext
+{{ process.mainModule.require('child_process').exec('Command') }}
+```
 
 
 <br/> 
