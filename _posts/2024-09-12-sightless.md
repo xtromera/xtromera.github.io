@@ -78,9 +78,8 @@ Following the steps:
 * Add the command to be executed in the `Database` Textbox with this format.
 
 
-```bash
-\{\{ process.mainModule.require('child_process').exec('Command') \}\} 
-```
+&#123;&#123; process.mainModule.require('child_process').exec('Command') &#125;&#125;
+
 
 
 <br/> 
