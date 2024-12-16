@@ -1,0 +1,38 @@
+title:              xtromera's blog
+email:              mohamedhatem843@gmail.com
+description:        A Personal blog sharing my offensive cybersecurity experience
+author:             xtromera
+baseurl:            "/"
+url:                "https://xtromera.github.io"
+
+# Social Profiles
+twitter_username:   
+github_username:    xtromera
+facebook_username:  profile.php?id=100008355671494
+instagram_username:  m_h19218
+linkedin_username:  mohamed-hatem-9a4b2a23b
+
+# Add your google-analytics ID here to activate google analytics
+google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
+
+# Build settings
+markdown:           kramdown
+paginate:           5
+paginate_path:      "/posts/page:num/"
+plugins:
+  - jekyll-feed
+  - jekyll-paginate
+  - jekyll-sitemap ## Uncomment this line to silently generate a sitemaps.org compliant sitemap for your Jekyll site
+
+# Arsenal collection
+collections:
+  arsenal:
+    output: true
+    permalink: /arsenal/:title/
+
+# Set the layout for arsenal posts
+defaults:
+  - scope:
+      path: "_arsenal"
+    values:
+      layout: post
