@@ -2,7 +2,7 @@
 layout: post
 title: "Blackfield HTB writeup"
 subtitle: "Walkethrough for the Blackfield HTB machine."
-date: 2025-01-23 23:45:12
+date: 2025-01-22 23:45:12
 background: '/img/posts/04.jpg'
 
 ---
